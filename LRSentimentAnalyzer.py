@@ -24,6 +24,7 @@ class LexicalAnalyzer(object):
         
     def read_data(self, excel_file, sheet_name):
 
+        from pandas import read_excel
         sheet_name = sheet_name.strip()
         data = read_excel(excel_file, sheet_name = sheet_name)
         #data = pd.read_csv("/Users/russell/Documents/NLPPaper/Comments.csv") #text in column 1, classifier in column 2.
@@ -31,10 +32,9 @@ class LexicalAnalyzer(object):
        # print(numpy_array)
         X = numpy_array[:,0]
         Y = numpy_array[:,1]
-        Z = numpy_array[:,2]
        
        
-        return X, Y,Z
+        return X, Y
 
 
     def preprocess_data(self,text):
@@ -179,20 +179,15 @@ class LexicalAnalyzer(object):
         num_of_detection = 0
         true_prediction = 0
         false_prediction = 0
-        
-        num_of_high_confidence = 0
-        numOfZeroScore = 0;
-        
-        very_high_confidence = []
-        zero_confidence = []
-        high_confidence = []
+       
         prediction_confidence_scores = []
         
-        prediction = []
+        predictions = []
         i = 0
        
+        Y_label = Y_label.astype('int')
         
-        
+       
         for user_review in X_data:
             #print(i, user_review)
             if len(str(user_review)) < 5:
@@ -215,9 +210,9 @@ class LexicalAnalyzer(object):
             for sentence in user_review:  
                 tokens = nlp_english(sentence)
                 #print(">> ",tokens)
+                
                 aspect_sentence = []
-                #text = word_tokenize(sentence)
-                #print("## ##",nltk.pos_tag(text))
+               
              
                 for token in tokens:   
                     # if not token.is_stop:
@@ -236,17 +231,14 @@ class LexicalAnalyzer(object):
                     
                     
                     if self.does_contain_adjective(aspect_sentence) == True:
-                        #removed += 1
-                       # print("*******" , aspect_sentence)
+                    
                         
                         score, positive,negative = self.get_polarity_score(aspect_sentence)
                         #print("-- ",i, score, positive,negative)
                         
                         total_positive_score += positive
                         total_negative_score += negative
-                        #print ("Score:   ", score)
-                       # score += get_polarity_score_sentic_net(aspect_sentence)
-                        
+                       
                         negation_score = self.get_negation_score(aspect_sentence)
                         if abs(negation_score) > 0 :  
                             score  +=  negation_score
@@ -259,33 +251,19 @@ class LexicalAnalyzer(object):
                                 
                             #print ("Neg: ",score,  aspect_sentence, negation_score)
                         total_score += score
-                        total_score += get_comparison_score(aspect_sentence)
-                        total_negative_score -=  get_comparison_score(aspect_sentence)
-                        #if (total_score == 0):
-                            #total_score = Vader_Lexicon(aspect_sentence)
-                    
-                #("##### Total Score:  ", total_score ) 
+                        total_score += self.get_comparison_score(aspect_sentence)
+                        total_negative_score -=  self.get_comparison_score(aspect_sentence)
                   
                 total_aspect_term += len(aspect_sentence)
-            
-            '''
-            if total_score == 0:
-                numOfZeroScore += 1
-                zero_confidence.append(i)
-            '''   
-                
-            
-           
-            #print("numOfZeroScore : ", numOfZeroScore)
+
+       
             predicted_label = 0
             true_label = int(Y_label[i])
         
             if total_score >= 0:
                 predicted_label = 1 
                 
-            
-            
-            
+        
             total_positive_negative = total_positive_score + total_negative_score
             
             print(i, total_positive_score, total_negative_score, total_positive_negative, total_score)
@@ -297,65 +275,35 @@ class LexicalAnalyzer(object):
                 prediction_confidence_score = 0
             prediction_confidence_scores.append(prediction_confidence_score)
             
-            
-            #if total_score > (float(total_aspect_term) * 0.15) or total_score < -(float(total_aspect_term) * 0.15):
-                
-            #if (total_score != 0 and total_positive_negative != 0  and (float(total_positive_score/total_positive_negative) > 0.75 or float(total_negative_score/total_positive_negative) > 0.75 )):
-               
-            if prediction_confidence_score >= 0.5:
-                very_high_confidence.append(i)
-            elif total_score != 0:
-            #total_score == 1 or total_score == -1:
-                num_of_high_confidence += 1
-                high_confidence.append(i)
-            else: 
-                #print("*************```",total_score)
-                #print("---------- ", i, user_review , Y_label[i])
-                numOfZeroScore += 1
-                zero_confidence.append(i)
-                
-            #if total_score > 1 or total_score < -1:
-            #if total_score > 2 or total_score < -2:
-            #if total_score > len(user_review) or total_score < -len(user_review) :
            
-            
-            
-            '''   
-            if int(Y_label[n])> 2:
-                true_label = 5
-                
-            '''
             if predicted_label == true_label:
                 true_prediction += 1
             else:
                 false_prediction += 1
                 for aspect_sentence in sentiments:
                     score = self.get_polarity_score(aspect_sentence)
-                   # print( aspect_sentence , score)
                     
-               # print("\n\n\n  @@@ : ", true_label , predicted_label, total_score)
-               
-            prediction.append(predicted_label)
+            predictions.append(predicted_label)
                 
             
             i += 1
-        #        if n == 3000:
-        #            break
+     
+        print("\n!!!!!!",len(Y_label), len(predictions))
         
-        print("\nLexicon: ")
-        #avg_precision_recal(Y_test, prediction)
-        results_f1_p_r = []
-        
-        print("\n!!!!!!",len(Y_label), len(prediction))
-        
-        f1score, precision,  recall = avg_precision_recal(Y_label, prediction)
-        print("----> ",f1score)
+        from SupervisedAlgorithm import  Performance
+        print("Prediction ------")
+        performance = Performance() 
+        conf_matrix, f1_score, precision,  recall,acc = performance.get_results(Y_label, predictions)
+        print("----",round(f1_score,4), round(precision,4),  round(recall,4), round(acc,4) )
+    
+        print(conf_matrix)
+       
         
         #write_label_prediction_to_file(X_data,  Y_label , prediction, prediction_confidence_scores, "/Users/russell/Downloads/results_process/" + current_dataset + "/" + str(process_id) + ".txt")
         
         #write_label_prediction_to_file(X_data,  Y_label , prediction, prediction_confidence_scores, "/Users/russell/Downloads/dvd/" + str(process_id) + ".txt")
            
-        write_label_prediction_to_file(X_data,  Y_label , prediction, prediction_confidence_scores, "/Users/russell/Downloads/electronics/" + str(process_id) + ".txt")
+        #write_label_prediction_to_file(X_data,  Y_label , prediction, prediction_confidence_scores, "/Users/russell/Downloads/electronics/" + str(process_id) + ".txt")
            
           
 
@@ -467,9 +415,13 @@ def main():
     
     lexicalAnalyzer = LexicalAnalyzer()
     
-    data,label = lexicalAnalyzer.get_data_n_label()
+    excel_file = "Provide path of excel file" #/Users/russell/Documents/NLP/Paper-2-SSentiA/Final/book_2.xlsx
+    sheet_name = "Provide Sheet Name"   # "book_2"
     
-    lexicalAnalyzer.classify_binary_dataset()
+
+    data,label = lexicalAnalyzer.read_data(excel_file, sheet_name)
+    
+    lexicalAnalyzer.classify_binary_dataset(data[:5],label[:5])
     
     
     print(" ")
