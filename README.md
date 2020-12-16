@@ -13,10 +13,17 @@ LRSentiA utilizes Opinion Lexicon (Hu and Liu, KDD-2004). https://www.cs.uic.edu
 
 
 
-The following libraries are required
+The following libraries are required-
 
-Scikit-learn https://scikit-learn.org/stable/ (For machine learning classifier)
-Spacy  https://spacy.io. (For parsingg and POS tag assignment for LRSentiA classifier)
+1. Scikit-learn https://scikit-learn.org/stable/ (For machine learning classifier) 
+
+2. Spacy  https://spacy.io. (For parsingg and POS tag assignment for LRSentiA classifier)
+
+3. Numpy
+
+4. Panda
+
+
 
 
 
