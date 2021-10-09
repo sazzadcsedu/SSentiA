@@ -27,8 +27,8 @@ The following libraries are required-
 
 The steps are as follows-
 
-1. Use LRSentiA to generate pseudo-label.
-2. Use SSentiA to train machine learning classifier utilizing the  pseudo-label training data. 
+1. Use LRSentiA (LRSentiA.py) to generate pseudo-label.
+2. Use SSentiA (SSentiA.py) to train machine learning classifier utilizing the  pseudo-label training data. 
 
 
 Please email me at ssazz001@odu.edu for any query.
